@@ -3,11 +3,8 @@ import os
 from datetime import datetime
 
 from pymongo import MongoClient
-from pymongo.mongo_client import MongoClient
+import gridfs
 from pysys.basetest import BaseTest
-
-from FastaParser import FastaParser
-import gzip
 
 class PySysTest(BaseTest):
 
@@ -15,23 +12,19 @@ class PySysTest(BaseTest):
 		BaseTest.__init__(self, descriptor, outsubdir, runner)
 
 	def execute(self):
-		parser = FastaParser(self)
-
 		client = MongoClient(self.project.MONGODB_CONNECTION_STRING.replace('~', '='))
-		db = client.ebi
-		db.sequences.drop()
+		db = client.ebi_files
+		fs = gridfs.GridFS(db)
 		
-		path = '/Users/james/data/EBI'
+		path = self.input
 		files = []
-		self.getFilesToProcess(path, files, ['.gz'])
+		self.getFilesToProcess(path, files, ['.xml', '.pdf', '.jpg'])
 
 		for file in files:
 			self.log.info(f'Importing {file}')
-			docs = []
-			with gzip.open(file, 'rt') as input_file:
-				docs = parser.parseFile(input_file)
-			db.sequences.insert_many(docs)
-			self.log.info(f'Imported {len(docs)}')
+			with open(file, 'rb') as f:
+				ret = fs.put(f)
+				self.log.info(ret)
 
 	def getFilesToProcess(self, path, files, extensions):
 		for item in os.listdir(path):
@@ -41,7 +34,6 @@ class PySysTest(BaseTest):
 			else:
 				filename, fileext = os.path.splitext(fullpath)
 				if fileext.lower() in extensions:
-					# Make sure this folder is marked as backed up
 					files.append(fullpath)
 
 	def validate(self):
