@@ -54,6 +54,5 @@ public class SequenceRepositoryTests {
     public void findsBySequenceId() {
 
         Sequence result = repository.findBySequenceId("ERZ1022724.3");
-        System.out.println(result);
     }
 }

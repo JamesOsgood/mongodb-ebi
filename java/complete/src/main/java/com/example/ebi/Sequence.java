@@ -14,9 +14,11 @@ public class Sequence {
     public String description;
     public String dup_count;
 
-    public Sequence(String sequenceId) 
+    public Sequence(String sequenceId, SequenceDescription seq, String description) 
     {
         this.sequenceId = sequenceId;
+        this.seq = seq;
+        this.description = description;
     }
 
     @Override
