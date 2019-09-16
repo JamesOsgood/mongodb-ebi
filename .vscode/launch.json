@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - AccessingDataMongodbApplication",
+            "request": "launch",
+            "mainClass": "com.example.ebi.AccessingDataMongodbApplication",
+            "projectName": "complete"
+        }
+    ]
+}
