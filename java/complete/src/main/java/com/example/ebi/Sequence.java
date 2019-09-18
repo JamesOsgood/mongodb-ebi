@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "sequences_sample")
+@Document(collection = "sequences_sample_java")
 public class Sequence {
 
     // @Id
@@ -12,6 +12,7 @@ public class Sequence {
     public String sequenceId;
     public SequenceDescription seq;
     public String description;
+    public String meta;
     public String dup_count;
 
     public Sequence(String sequenceId, SequenceDescription seq, String description) 

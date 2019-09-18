@@ -17,19 +17,31 @@ package com.example.ebi;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
-
+import org.omg.CORBA.UnknownUserExceptionHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Example;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.example.ebi.Sequence;
 import com.example.ebi.SequenceRepository;
+
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.core.query.Criteria;
+
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.io.BufferedReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -38,21 +50,92 @@ public class SequenceRepositoryTests {
     @Autowired
     SequenceRepository repository;
 
-    // Customer dave, oliver, carter;
+    @Autowired
+	  private MongoOperations operations;
 
     @Before
     public void setUp() {
-
-        // repository.deleteAll();
-
-        // dave = repository.save(new Customer("Dave", "Matthews"));
-        // oliver = repository.save(new Customer("Oliver August", "Matthews"));
-        // carter = repository.save(new Customer("Carter", "Beauford"));
     }
 
+    // @Ignore 
+    @Test
+    public void importData() throws IOException, 
+                                    UnsupportedEncodingException, 
+                                    NoSuchAlgorithmException
+    {
+        repository.deleteAll();  
+        Reader reader = Files.newBufferedReader(Paths.get("/Users/james/code/github/JamesOsgood/mongodb-ebi/java/complete/data/sample_data.csv"));
+        BufferedReader csvReader = new BufferedReader(reader);
+        MessageDigest messageDigest = MessageDigest.getInstance("md5");
+        String row = csvReader.readLine();
+        while ((row = csvReader.readLine()) != null) 
+        {
+            String[] data = row.split(",");
+            // File is _id,sequence_id,meta,description,seq
+            int index = 1;
+            String sequenceId = data[index++];
+            String meta = data[index++];
+            String description = data[index++];
+            String seq = data[index++];
+            SequenceDescription sd = new SequenceDescription();
+
+            messageDigest.reset();
+            messageDigest.update(seq.getBytes("UTF8"));
+            
+            final byte[] resultByte = messageDigest.digest();
+            sd.hash = encodeHexString(resultByte);
+            sd.sequence = seq;
+
+            Sequence sequence = new Sequence(sequenceId, sd, description);
+            sequence.meta = meta;
+            repository.insert(sequence);
+      }
+    }
+
+    @Ignore 
     @Test
     public void findsBySequenceId() {
 
         Sequence result = repository.findBySequenceId("ERZ1022724.3");
+		    System.out.println(result);
     }
-}
+
+    @Ignore 
+    @Test
+    public void upsertSequence() 
+    {
+      Sequence seq2 = repository.findBySequenceId("ERZ1022724.1");
+      System.out.println(seq2);
+      seq2.sequenceId = "NewSeq";
+      // seq2.seq.hash = "new_hash";
+
+      //search a document that doesn't exist
+      Query query = new Query();
+      query.addCriteria(Criteria.where("seq.hash").is(seq2.seq.hash));
+
+      Update update = new Update();
+      update.inc("dup_count");
+
+      update.setOnInsert("sequenceId", seq2.sequenceId);
+      update.setOnInsert("seq", seq2.seq);
+      update.setOnInsert("description", seq2.description);
+      update.setOnInsert("meta", seq2.meta);
+
+      operations.upsert(query, update, Sequence.class);
+    }
+
+
+    public static String byteToHex(byte num) {
+      char[] hexDigits = new char[2];
+      hexDigits[0] = Character.forDigit((num >> 4) & 0xF, 16);
+      hexDigits[1] = Character.forDigit((num & 0xF), 16);
+      return new String(hexDigits);
+  }
+  
+  public static String encodeHexString(byte[] byteArray) {
+    StringBuffer hexStringBuffer = new StringBuffer();
+    for (int i = 0; i < byteArray.length; i++) {
+        hexStringBuffer.append(byteToHex(byteArray[i]));
+    }
+    return hexStringBuffer.toString();
+}}

@@ -32,5 +32,5 @@ class FastaParser(object):
 		parts['top'] = id[:3]
 		parts['first'] = id[3:6]
 		parts['second'] = id[6:]
-		return parts
+		return parts['top'] + parts['first']
 

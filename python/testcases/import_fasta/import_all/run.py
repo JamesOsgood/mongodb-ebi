@@ -21,7 +21,8 @@ class PySysTest(BaseTest):
 		db = client.ebi
 		db.sequences.drop()
 		
-		path = '/Users/james/data/EBI'
+		# path = '/Users/james/data/EBI'
+		path = self.input
 		files = []
 		self.getFilesToProcess(path, files, ['.gz'])
 
