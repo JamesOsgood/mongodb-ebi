@@ -94,22 +94,39 @@ public class SequenceRepositoryTests {
 
     @Ignore 
     @Test
-    public void findsBySequenceId() {
+    public void findBySequenceId() {
 
         Sequence result = repository.findBySequenceId("ERZ1022724.3");
 		    System.out.println(result);
     }
 
+    // @Ignore 
+    @Test
+    public void findBySequenceHash() {
+
+      Query query = new Query();
+      String hash = "d0ae32f818a2f384c567c6518bee376a";
+      query.addCriteria(Criteria.where("seq.hash").is(hash));
+
+      Sequence sequence = operations.findOne(query, Sequence.class);
+      System.out.println(sequence);
+    }
+
     @Ignore 
     @Test
-    public void upsertSequence() 
+    public void insertSequenceIgnoreDuplicates() 
     {
+      // For the exercise, find a sequence to clone
       Sequence seq2 = repository.findBySequenceId("ERZ1022724.1");
       System.out.println(seq2);
+      
+      // Fake it to be a new one....
       seq2.sequenceId = "NewSeq";
-      // seq2.seq.hash = "new_hash";
+      seq2.seq.hash = "new_hash";
 
-      //search a document that doesn't exist
+      // Write code so that we just update dup_count = dup_count + 1 if the hash exists
+      // Or else insert a new document
+
       Query query = new Query();
       query.addCriteria(Criteria.where("seq.hash").is(seq2.seq.hash));
 
@@ -124,8 +141,7 @@ public class SequenceRepositoryTests {
       operations.upsert(query, update, Sequence.class);
     }
 
-
-    public static String byteToHex(byte num) {
+  public static String byteToHex(byte num) {
       char[] hexDigits = new char[2];
       hexDigits[0] = Character.forDigit((num >> 4) & 0xF, 16);
       hexDigits[1] = Character.forDigit((num & 0xF), 16);
